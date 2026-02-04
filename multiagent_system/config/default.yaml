@@ -1,0 +1,28 @@
+# Конфигурация системы
+
+llm:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 1000
+  # api_key: устанавливается через переменную окружения OPENAI_API_KEY
+  base_url: null
+  enable: true
+
+agents:
+  max_hypotheses: 20
+  refinement_cycles: 2
+  significance_level: 0.05
+  quality_threshold: 0.7
+  enable_llm: true
+
+data:
+  max_rows: 10000
+  max_columns: 50
+  missing_threshold: 0.3
+  sample_size: 1000
+
+system:
+  cache_dir: "./cache"
+  log_level: "INFO"
+  output_dir: "./outputs"
