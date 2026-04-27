@@ -1,0 +1,62 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AutoImportSettings\">\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\n  </component>\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"89dc263c-d3f7-482e-8c6d-4c3b309a6c3d\" name=\"Changes\" comment=\"- first commit\" />\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"FileTemplateManagerImpl\">\n    <option name=\"RECENT_TEMPLATES\">\n      <list>\n        <option value=\"Jupyter Notebook\" />\n        <option value=\"Python Script\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\n      <map>\n        <entry key=\"$PROJECT_DIR$\" value=\"1a4905407d6d2c19a282f6e30fd5d9fd8db3d3c7\" />\n      </map>\n    </option>\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n    <option name=\"ROOT_SYNC\" value=\"SYNC\" />\n  </component>\n  <component name=\"GitHubPullRequestSearchHistory\">{\n  &quot;lastFilter&quot;: {\n    &quot;state&quot;: &quot;OPEN&quot;,\n    &quot;assignee&quot;: &quot;Quarest2&quot;\n  }\n}</component>\n  <component name=\"GithubPullRequestsUISettings\">{\n  &quot;selectedUrlAndAccountId&quot;: {\n    &quot;url&quot;: &quot;https://github.com/Quarest2/multiagent_system.git&quot;,\n    &quot;accountId&quot;: &quot;48c36030-1c86-4d18-b7a3-f72c09af8246&quot;\n  }\n}</component>\n  <component name=\"ProjectColorInfo\">{\n  &quot;associatedIndex&quot;: 6\n}</component>\n  <component name=\"ProjectId\" id=\"38tVFCvEMhDDg23i4K9zKG0X2Tp\" />\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\"><![CDATA[{\n  \"keyToString\": {\n    \"ModuleVcsDetector.initialDetectionPerformed\": \"true\",\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\n    \"RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252\": \"true\",\n    \"RunOnceActivity.git.unshallow\": \"true\",\n    \"SHARE_PROJECT_CONFIGURATION_FILES\": \"true\",\n    \"git-widget-placeholder\": \"master\",\n    \"last_opened_file_path\": \"/Users/asakhmetyanov/PycharmProjects/multiagent_system\",\n    \"settings.editor.selected.configurable\": \"project.propVCSSupport.DirectoryMappings\"\n  }\n}]]></component>\n  <component name=\"SharedIndexes\">\n    <attachedChunks>\n      <set>\n        <option value=\"bundled-python-sdk-ce6832f46686-7b97d883f26b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.25557.178\" />\n      </set>\n    </attachedChunks>\n  </component>\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\n      <changelist id=\"89dc263c-d3f7-482e-8c6d-4c3b309a6c3d\" name=\"Changes\" comment=\"\" />\n      <created>1769618747551</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1769618747551</updated>\n    </task>\n    <task id=\"LOCAL-00001\" summary=\"- first commit\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1770230333026</created>\n      <option name=\"number\" value=\"00001\" />\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1770230333026</updated>\n    </task>\n    <option name=\"localTasksCounter\" value=\"2\" />\n    <servers />\n  </component>\n  <component name=\"Vcs.Log.Tabs.Properties\">\n    <option name=\"TAB_STATES\">\n      <map>\n        <entry key=\"MAIN\">\n          <value>\n            <State>\n              <option name=\"FILTERS\">\n                <map>\n                  <entry key=\"branch\">\n                    <value>\n                      <list>\n                        <option value=\"origin/main\" />\n                      </list>\n                    </value>\n                  </entry>\n                </map>\n              </option>\n            </State>\n          </value>\n        </entry>\n      </map>\n    </option>\n  </component>\n  <component name=\"VcsManagerConfiguration\">\n    <ignored-roots>\n      <path value=\"$PROJECT_DIR$/multiagent_system\" />\n    </ignored-roots>\n    <MESSAGE value=\"- first commit\" />\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"- first commit\" />\n  </component>\n  <component name=\"XDebuggerManager\">\n    <breakpoint-manager>\n      <breakpoints>\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\n          <url>file://$PROJECT_DIR$/multiagent_system/src/main.py</url>\n          <line>12</line>\n          <option name=\"timeStamp\" value=\"1\" />\n        </line-breakpoint>\n      </breakpoints>\n    </breakpoint-manager>\n  </component>\n</project>
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 4426858fd91d01b260848246cc16f9ed05594962)
++++ b/.idea/workspace.xml	(date 1770285436404)
+@@ -4,7 +4,9 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="89dc263c-d3f7-482e-8c6d-4c3b309a6c3d" name="Changes" comment="- first commit" />
++    <list default="true" id="89dc263c-d3f7-482e-8c6d-4c3b309a6c3d" name="Changes" comment="- first commit">
++      <change afterPath="$PROJECT_DIR$/.idea/multiagent_system.iml" afterDir="false" />
++    </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+@@ -54,7 +56,7 @@
+     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+     "RunOnceActivity.git.unshallow": "true",
+     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+-    "git-widget-placeholder": "master",
++    "git-widget-placeholder": "main",
+     "last_opened_file_path": "/Users/asakhmetyanov/PycharmProjects/multiagent_system",
+     "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings"
+   }
+@@ -82,7 +84,15 @@
+       <option name="project" value="LOCAL" />
+       <updated>1770230333026</updated>
+     </task>
+-    <option name="localTasksCounter" value="2" />
++    <task id="LOCAL-00002" summary="- first commit">
++      <option name="closed" value="true" />
++      <created>1770232458374</created>
++      <option name="number" value="00002" />
++      <option name="presentableId" value="LOCAL-00002" />
++      <option name="project" value="LOCAL" />
++      <updated>1770232458374</updated>
++    </task>
++    <option name="localTasksCounter" value="3" />
+     <servers />
+   </component>
+   <component name="Vcs.Log.Tabs.Properties">
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ProjectRootManager\" version=\"2\" project-jdk-name=\"Python 3.14 (multiagent_system)\" project-jdk-type=\"Python SDK\" />\n</project>
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision 4426858fd91d01b260848246cc16f9ed05594962)
++++ b/.idea/misc.xml	(date 1770285436406)
+@@ -1,4 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
++  <component name="Black">
++    <option name="sdkName" value="Python 3.14 (multiagent_system)" />
++  </component>
+   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.14 (multiagent_system)" project-jdk-type="Python SDK" />
+ </project>
+\ No newline at end of file

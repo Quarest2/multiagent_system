@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-04-27 22:58:12",
+  "summary": {
+    "datasets_analyzed": 1,
+    "avg_iqs_improvement": 3.8999999999999986,
+    "avg_time_overhead": 234.76040625572205,
+    "avg_iqs_no_ai": 52.4,
+    "avg_iqs_with_ai": 56.3
+  },
+  "metrics": {
+    "quality_metrics": [
+      {
+        "dataset_name": "Teen_Mental_Health_Dataset.csv",
+        "time_diff": 234.76040625572205,
+        "time_ratio": 470.27601005792457,
+        "quality_improvement": 0.006111111111111067,
+        "confidence_improvement": -0.1928333333333334,
+        "significance_rate_diff": 2.7777777777777786,
+        "interpretation_improvement": 89.91666666666667,
+        "iqs_improvement": 3.8999999999999986,
+        "ai_explanations_added": true,
+        "no_ai": {
+          "execution_time": 0.5002608299255371,
+          "total_hypotheses": 18,
+          "significant_hypotheses": 4,
+          "significance_rate": 22.22222222222222,
+          "avg_quality": 0.838888888888889,
+          "avg_confidence": 0.7583333333333333,
+          "avg_p_value": 0.5361497562579346,
+          "interpretation_length": 101.83333333333333,
+          "iqs_score": 52.4,
+          "iqs_grade": "D (Посредственно)",
+          "iqs_breakdown": {
+            "statistical_quality": 10.7,
+            "practical_value": 8.0,
+            "diversity": 17.2,
+            "novelty": 11.5,
+            "efficiency": 5.0
+          },
+          "hypothesis_types": {
+            "segmentation": 2,
+            "regression": 1,
+            "interaction_effect": 1,
+            "threshold_effect": 2,
+            "mediation_analysis": 1,
+            "mean_difference": 4,
+            "correlation": 7
+          },
+          "has_ai_explanations": false
+        },
+        "with_ai": {
+          "execution_time": 235.26066708564758,
+          "total_hypotheses": 20,
+          "significant_hypotheses": 5,
+          "significance_rate": 25.0,
+          "avg_quality": 0.8450000000000001,
+          "avg_confidence": 0.5654999999999999,
+          "avg_p_value": 0.51957148274971,
+          "interpretation_length": 191.75,
+          "iqs_score": 56.3,
+          "iqs_grade": "C (Удовлетворительно)",
+          "iqs_breakdown": {
+            "statistical_quality": 16.0,
+            "practical_value": 8.0,
+            "diversity": 16.6,
+            "novelty": 11.0,
+            "efficiency": 4.7
+          },
+          "hypothesis_types": {
+            "segmentation": 2,
+            "regression": 1,
+            "correlation": 8,
+            "mean_difference": 5,
+            "interaction_effect": 1,
+            "threshold_effect": 2,
+            "mediation_analysis": 1
+          },
+          "has_ai_explanations": true
+        }
+      }
+    ],
+    "performance_metrics": [],
+    "ai_impact_metrics": []
+  }
+}

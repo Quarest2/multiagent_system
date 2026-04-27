@@ -1,218 +1,281 @@
-"""
-Интерпретатор результатов анализа.
-"""
+"""Агент интерпретации результатов с AI."""
 
-from typing import Dict, Any, Optional
-import numpy as np
-
-from ..config import AgentConfig
-from ..llm.base_client import LLMClient
-from ..llm.prompts import PromptManager
-from ..utils.logger import setup_logger
-
-logger = setup_logger(__name__)
+from typing import Dict, Any, List, Optional
+from ..config import AgentConfig, LLMConfig
+from ..llm.groq_client import GroqLLMClient
+from ..utils.logger import logger
 
 
 class Interpreter:
-    """Интерпретатор результатов статистического анализа."""
+    """Интерпретатор результатов анализа с AI."""
 
-    def __init__(self, config: AgentConfig):
+    def __init__(self, config: AgentConfig, llm_config: LLMConfig):
         self.config = config
-        self.llm_client = LLMClient(config) if config.enable_llm else None
-        self.prompt_manager = PromptManager(config)
+        self.llm_client = GroqLLMClient(llm_config.api_key) if llm_config.enabled else None
+        self.ai_call_count = 0  # Счетчик для rate limiting
+        self.max_ai_calls_per_run = 15  # Ограничение на бесплатном плане
 
-    def interpret(self,
-                 hypothesis: Dict[str, Any],
-                 analysis_result: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Интерпретация результатов анализа.
+    def interpret(self, hypothesis: Dict[str, Any],
+                  analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Интерпретация результатов анализа."""
 
-        Args:
-            hypothesis: Гипотеза
-            analysis_result: Результаты анализа
-
-        Returns:
-            Интерпретация
-        """
-        if analysis_result.get('error'):
-            return self._error_interpretation(hypothesis, analysis_result)
-
+        # Базовая интерпретация
         base_interpretation = self._base_interpretation(hypothesis, analysis_result)
 
-        if self.config.enable_llm and self.llm_client:
-            enhanced = self._llm_enhancement(hypothesis, analysis_result, base_interpretation)
-            if enhanced:
-                return enhanced
+        # AI-усиление (если доступно и не превышен лимит)
+        if (self.config.use_ai_interpretation and
+                self.llm_client and
+                self.llm_client.is_available() and
+                self.ai_call_count < self.max_ai_calls_per_run):
+
+            ai_interpretation = self._ai_interpretation(hypothesis, analysis_result)
+            if ai_interpretation:
+                base_interpretation['ai_explanation'] = ai_interpretation
+                base_interpretation['explanation'] = ai_interpretation.get('explanation',
+                                                                           base_interpretation['explanation'])
+                logger.debug(f"Интерпретация усилена AI ({self.ai_call_count}/{self.max_ai_calls_per_run})")
 
         return base_interpretation
 
-    def _base_interpretation(self,
-                            hypothesis: Dict[str, Any],
-                            analysis_result: Dict[str, Any]) -> Dict[str, Any]:
-        """Базовая интерпретация без LLM."""
-        p_value = analysis_result.get('p_value')
+    def _base_interpretation(self, hypothesis: Dict, analysis_result: Dict) -> Dict[str, Any]:
+        """Базовая интерпретация без AI."""
+        p_value = analysis_result.get('p_value', 1.0)
         is_significant = analysis_result.get('is_significant', False)
 
-        if p_value is None:
-            conclusion = "Не удалось провести анализ"
-            confidence = 0.0
-        elif p_value < self.config.significance_level:
-            conclusion = f"Гипотеза подтверждена (p={p_value:.4f} < {self.config.significance_level})"
-            confidence = 1.0 - p_value
+        if is_significant:
+            conclusion = f"✓ Гипотеза подтверждена (p={p_value:.4f})"
         else:
-            conclusion = f"Гипотеза отклонена (p={p_value:.4f} ≥ {self.config.significance_level})"
-            confidence = p_value
+            conclusion = f"✗ Гипотеза отклонена (p={p_value:.4f})"
 
-        explanation = self._generate_explanation(hypothesis, analysis_result, conclusion)
-
-        confidence = self._calculate_confidence(analysis_result)
+        # Расширенное объяснение в зависимости от метода
+        method = analysis_result.get('method', 'unknown')
+        explanation = self._generate_method_explanation(hypothesis, analysis_result, method)
 
         return {
             'conclusion': conclusion,
             'explanation': explanation,
-            'confidence': confidence,
-            'is_llm_enhanced': False
+            'practical_significance': self._assess_practical_significance(analysis_result),
+            'recommendations': self._generate_recommendations(hypothesis, analysis_result)
         }
 
-    def _generate_explanation(self,
-                             hypothesis: Dict[str, Any],
-                             analysis_result: Dict[str, Any],
-                             conclusion: str) -> str:
-        """Генерация объяснения результатов."""
-        method = analysis_result.get('method', 'unknown')
-        p_value = analysis_result.get('p_value')
-        effect_size = analysis_result.get('effect_size')
+    def _generate_method_explanation(self, hypothesis: Dict, result: Dict, method: str) -> str:
+        """Генерация объяснения в зависимости от метода."""
+        p_value = result.get('p_value', 1.0)
+        is_sig = result.get('is_significant', False)
 
-        explanation_parts = []
+        if method == 'segmentation':
+            n_clusters = result.get('n_clusters', 0)
+            silhouette = result.get('silhouette_score', 0)
+            profiles = result.get('segment_profiles', [])
 
-        explanation_parts.append(conclusion)
-
-        if method != 'unknown':
-            method_descriptions = {
-                'pearson': "коэффициент корреляции Пирсона",
-                'spearman': "ранговая корреляция Спирмена",
-                't_test_ind': "t-тест для независимых выборок",
-                'chi2': "критерий хи-квадрат",
-                'shapiro': "тест Шапиро-Уилка"
-            }
-            method_desc = method_descriptions.get(method, method)
-            explanation_parts.append(f"Использован {method_desc}.")
-
-        if effect_size is not None:
-            if abs(effect_size) < 0.1:
-                effect_desc = "очень маленький"
-            elif abs(effect_size) < 0.3:
-                effect_desc = "маленький"
-            elif abs(effect_size) < 0.5:
-                effect_desc = "средний"
+            if is_sig:
+                expl = f"Обнаружено {n_clusters} различных сегмента (качество кластеризации: {silhouette:.2f}). "
+                if profiles:
+                    sizes = [p['size'] for p in profiles]
+                    expl += f"Размеры сегментов: {', '.join(map(str, sizes))} записей. "
+                    expl += "Сегменты значительно отличаются по характеристикам."
             else:
-                effect_desc = "большой"
+                expl = "Четкие сегменты не выявлены. Данные относительно однородны."
+            return expl
 
-            if effect_desc:
-                explanation_parts.append(f"Размер эффекта: {effect_desc} ({effect_size:.3f}).")
+        elif method == 'interaction':
+            improvement = result.get('improvement', 0)
+            r2_base = result.get('r2_base', 0)
+            r2_int = result.get('r2_with_interaction', 0)
 
-        if p_value is not None:
-            if p_value < 0.001:
-                explanation_parts.append("Результат имеет высокую статистическую значимость.")
-            elif p_value < 0.01:
-                explanation_parts.append("Результат статистически значим.")
+            if is_sig:
+                expl = (f"Взаимодействие переменных значимо улучшает модель (R²: {r2_base:.3f} → {r2_int:.3f}, "
+                        f"прирост {improvement:.3f}). Эффект одной переменной зависит от значения другой.")
+            else:
+                expl = "Взаимодействие переменных не дает значимого улучшения. Переменные действуют независимо."
+            return expl
 
-        return " ".join(explanation_parts)
+        elif method == 'threshold':
+            thresholds = result.get('suggested_thresholds', [])
 
-    def _calculate_confidence(self, analysis_result: Dict[str, Any]) -> float:
-        """Расчет уверенности в результатах."""
-        confidence = 0.5
+            if is_sig:
+                expl = f"Обнаружены потенциальные пороговые значения: {', '.join(f'{t:.2f}' for t in thresholds)}. "
+                expl += "Эффект может изменяться при переходе через эти границы."
+            else:
+                expl = "Четкие пороговые эффекты не обнаружены. Зависимость линейная или отсутствует."
+            return expl
 
-        p_value = analysis_result.get('p_value')
-        if p_value is not None:
-            if p_value < 0.001:
-                confidence += 0.3
-            elif p_value < 0.01:
-                confidence += 0.2
-            elif p_value < 0.05:
-                confidence += 0.1
-            elif p_value > 0.2:
-                confidence -= 0.1
+        elif method == 'nonlinear':
+            r2_linear = result.get('r2_linear', 0)
+            r2_poly = result.get('r2_polynomial', 0)
+            improvement = result.get('improvement', 0)
 
-        effect_size = analysis_result.get('effect_size')
-        if effect_size is not None:
-            if abs(effect_size) > 0.5:
-                confidence += 0.2
-            elif abs(effect_size) > 0.3:
-                confidence += 0.1
+            if is_sig:
+                expl = (
+                    f"Обнаружена нелинейная зависимость (полиномиальная модель лучше: R² {r2_linear:.3f} → {r2_poly:.3f}). "
+                    f"Зависимость имеет U-образную или перевернутую U-форму.")
+            else:
+                expl = "Зависимость близка к линейной. Усложнение модели не требуется."
+            return expl
 
-        n = analysis_result.get('n')
-        if n is not None:
-            if n > 1000:
-                confidence += 0.1
-            elif n > 100:
-                confidence += 0.05
-            elif n < 30:
-                confidence -= 0.1
+        elif method == 'mediation':
+            pct = result.get('percent_mediated', 0)
+            indirect = result.get('indirect_effect', 0)
 
-        return max(0.0, min(1.0, confidence))
+            if is_sig:
+                expl = (f"Обнаружена медиация: {pct:.1f}% эффекта проходит через медиатор. "
+                        f"Переменные связаны не напрямую, а через промежуточный механизм.")
+            else:
+                expl = "Медиационный эффект не обнаружен. Переменные связаны напрямую или не связаны."
+            return expl
 
-    def _llm_enhancement(self,
-                        hypothesis: Dict[str, Any],
-                        analysis_result: Dict[str, Any],
-                        base_interpretation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Улучшение интерпретации через LLM."""
+        else:
+            # Базовое объяснение
+            expl = f"Используя метод '{method}', получен p-value = {p_value:.4f}. "
+            if is_sig:
+                expl += "Это указывает на статистически значимую закономерность."
+            else:
+                expl += "Статистически значимой закономерности не обнаружено."
+            return expl
+
+    def _ai_interpretation(self, hypothesis: Dict, analysis_result: Dict) -> Optional[Dict]:
+        """AI-интерпретация результатов."""
+
+        # Ограничение вызовов
+        self.ai_call_count += 1
+
+        system_prompt = """Ты - опытный специалист по анализу данных и статистике. 
+Объясняй результаты понятным языком для бизнес-аудитории, давай практические рекомендации.
+Избегай жаргона, но будь точным."""
+
+        # Подготовка деталей анализа
+        details_str = self._format_analysis_details(analysis_result)
+
+        user_prompt = f"""Проинтерпретируй результаты статистического анализа:
+
+ГИПОТЕЗА: {hypothesis['text']}
+ТИП АНАЛИЗА: {hypothesis['type']}
+МЕТОД: {analysis_result.get('method', 'unknown')}
+РЕЗУЛЬТАТЫ: {details_str}
+ЗНАЧИМОСТЬ: {'Да' if analysis_result.get('is_significant') else 'Нет'}
+
+Предоставь краткий JSON ответ:
+{{
+  "explanation": "2-3 предложения о том, что означает результат",
+  "practical_meaning": "Практическое значение для бизнеса",
+  "recommendations": ["конкретная рекомендация 1", "конкретная рекомендация 2"]
+}}
+
+Будь кратким и конкретным. Только JSON, без дополнительного текста."""
+
         try:
-            prompt = self.prompt_manager.get_prompt(
-                'interpretation',
-                hypothesis_text=hypothesis['text'],
-                method=analysis_result.get('method', 'unknown'),
-                p_value=analysis_result.get('p_value'),
-                statistic=analysis_result.get('statistic'),
-                effect_size=analysis_result.get('effect_size'),
-                confidence_interval=analysis_result.get('confidence_interval')
-            )
+            response = self.llm_client.generate_json(user_prompt, system_prompt)
 
-            response = self.llm_client.generate(prompt, max_tokens=500)
-
-            enhanced_interpretation = self._parse_llm_response(response, base_interpretation)
-            enhanced_interpretation['is_llm_enhanced'] = True
-
-            return enhanced_interpretation
+            # Проверка качества ответа
+            if response and isinstance(response, dict) and 'explanation' in response:
+                return response
+            else:
+                logger.debug("AI вернул некорректный ответ, используем базовую интерпретацию")
+                return None
 
         except Exception as e:
-            logger.error(f"Ошибка улучшения интерпретации через LLM: {e}")
+            logger.debug(f"AI интерпретация недоступна: {e}")
             return None
 
-    def _parse_llm_response(self,
-                           llm_response: str,
-                           base_interpretation: Dict[str, Any]) -> Dict[str, Any]:
-        """Парсинг ответа LLM."""
-        lines = llm_response.strip().split('\n')
+    def _format_analysis_details(self, result: Dict) -> str:
+        """Форматирование деталей для AI."""
+        details = []
 
-        conclusion = base_interpretation['conclusion']
-        explanation = base_interpretation['explanation']
+        if 'p_value' in result:
+            details.append(f"p-value={result['p_value']:.6f}")
 
-        for line in lines:
-            line_lower = line.lower()
+        if 'statistic' in result:
+            details.append(f"статистика={result['statistic']:.4f}")
 
-            if 'вывод' in line_lower and len(line) > 10:
-                conclusion = line.strip()
-            elif 'объяснение' in line_lower or 'значение' in line_lower:
-                if len(line) > 20:
-                    explanation = line.strip()
+        if 'sample_size' in result:
+            details.append(f"выборка={result['sample_size']}")
 
-        return {
-            'conclusion': conclusion,
-            'explanation': explanation,
-            'confidence': base_interpretation['confidence'],
-            'is_llm_enhanced': True
-        }
+        # Специфичные для метода детали
+        if 'n_clusters' in result:
+            details.append(f"кластеров={result['n_clusters']}")
 
-    def _error_interpretation(self,
-                             hypothesis: Dict[str, Any],
-                             analysis_result: Dict[str, Any]) -> Dict[str, Any]:
-        """Интерпретация при ошибке анализа."""
-        error_msg = analysis_result.get('error', 'Неизвестная ошибка')
+        if 'improvement' in result:
+            details.append(f"улучшение={result['improvement']:.4f}")
 
-        return {
-            'conclusion': f"Ошибка анализа: {error_msg}",
-            'explanation': "Не удалось проверить гипотезу из-за ошибки в анализе.",
-            'confidence': 0.0,
-            'is_llm_enhanced': False
-        }
+        if 'percent_mediated' in result:
+            details.append(f"медиация={result['percent_mediated']:.1f}%")
+
+        return ", ".join(details)
+
+    def _assess_practical_significance(self, result: Dict) -> str:
+        """Оценка практической значимости."""
+        if not result.get('is_significant'):
+            return "Не значима"
+
+        # Оценка на основе силы эффекта
+        method = result.get('method')
+
+        if method == 'segmentation':
+            silhouette = result.get('silhouette_score', 0)
+            if silhouette > 0.5:
+                return "Высокая практическая значимость"
+            elif silhouette > 0.3:
+                return "Средняя практическая значимость"
+            else:
+                return "Низкая практическая значимость"
+
+        elif method in ['interaction', 'nonlinear']:
+            improvement = result.get('improvement', 0)
+            if improvement > 0.1:
+                return "Высокая практическая значимость"
+            elif improvement > 0.05:
+                return "Средняя практическая значимость"
+            else:
+                return "Низкая практическая значимость"
+
+        elif method == 'mediation':
+            pct = result.get('percent_mediated', 0)
+            if pct > 50:
+                return "Высокая практическая значимость"
+            elif pct > 20:
+                return "Средняя практическая значимость"
+            else:
+                return "Низкая практическая значимость"
+
+        else:
+            # Общая оценка
+            effect = abs(result.get('statistic', 0))
+            if effect > 0.5:
+                return "Высокая практическая значимость"
+            elif effect > 0.3:
+                return "Средняя практическая значимость"
+            else:
+                return "Низкая практическая значимость"
+
+    def _generate_recommendations(self, hypothesis: Dict, result: Dict) -> List[str]:
+        """Генерация рекомендаций."""
+        recommendations = []
+        method = result.get('method')
+        is_sig = result.get('is_significant', False)
+
+        if is_sig:
+            if method == 'segmentation':
+                recommendations.append("Изучить профили сегментов для целевых стратегий")
+                recommendations.append("Проверить стабильность сегментов на новых данных")
+
+            elif method == 'interaction':
+                recommendations.append("Учитывать взаимодействие при построении моделей")
+                recommendations.append("Проанализировать механизм взаимодействия детальнее")
+
+            elif method == 'threshold':
+                recommendations.append("Определить точные пороговые значения")
+                recommendations.append("Разработать стратегии для разных диапазонов")
+
+            elif method == 'mediation':
+                recommendations.append("Фокусироваться на медиаторе для влияния на результат")
+                recommendations.append("Исследовать другие возможные медиаторы")
+
+            else:
+                recommendations.append("Исследовать причинно-следственные связи")
+                recommendations.append("Проверить устойчивость результата на других данных")
+        else:
+            recommendations.append("Увеличить размер выборки")
+            recommendations.append("Рассмотреть альтернативные гипотезы")
+            recommendations.append("Проверить качество данных")
+
+        return recommendations
